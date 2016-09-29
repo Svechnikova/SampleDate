@@ -1,27 +1,31 @@
 package com.example.tatyana.sampledate;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String TAG = MainActivity.class.getName();
+
     TextView textViewDate;
-    Date currTime;
+    String currTime;
+    TimeZoneChangeListener mTimeZoneChangeListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,17 +36,25 @@ public class MainActivity extends AppCompatActivity {
 
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
         Date currentLocalTime = cal.getTime();
-        currTime = currentLocalTime;
-        DateFormat date = new SimpleDateFormat("dd-MM-yyy HH:mm:ss z");
-        date.setTimeZone(TimeZone.getDefault());
-//        date.setTimeZone(TimeZone.getTimeZone("GMT"));
-        String localTime = date.format(currentLocalTime);
-        String message = "Current time: " + currentLocalTime + "\nGMT: " + localTime;
-//        System.out.println(localTime);
+        DateFormat date = new SimpleDateFormat(DATE_FORMAT); //"dd-MM-yyy HH:mm:ss z"
+        date.setTimeZone(TimeZone.getTimeZone("GMT"));
+        String timeInGMT = date.format(currentLocalTime);
+        currTime = timeInGMT;
+        String message = "Time in GMT: " + timeInGMT;
         textViewDate.setText(message);
 
-        String msg=getIntent().getStringExtra("Message");
-        textViewDate.append("\nNew Timezone: "+msg);
+        mTimeZoneChangeListener = new TimeZoneChangeListener(getApplicationContext()) {
+            @Override
+            void onTimeZoneChanged(String timezone) {
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        "Time zone changed: " + timezone, Toast.LENGTH_SHORT);
+                toast.show();
+
+                setCurrentTime();
+
+            }
+        };
+        mTimeZoneChangeListener.register();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -78,17 +90,24 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-    private BroadcastReceiver broadcastReceiverChangeTimezone = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            setCurrentTime();
-        }
-    };
+
+    @Override
+    protected void onDestroy() {
+        mTimeZoneChangeListener.unregister();
+        mTimeZoneChangeListener = null;
+        super.onDestroy();
+    }
 
     public void setCurrentTime(){
-        DateFormat date = new SimpleDateFormat("dd-MM-yyy HH:mm:ss z");
-        date.setTimeZone(TimeZone.getDefault());
-        String localTime = date.format(currTime);
+        DateFormat date = new SimpleDateFormat(DATE_FORMAT);
+        date.setTimeZone(TimeZone.getTimeZone("GMT"));
+        Date localTime = null;
+        try {
+            localTime = date.parse(currTime);
+        } catch (ParseException e) {
+            Log.e(TAG, "Could not convert date: [" + currTime + "]");
+            e.printStackTrace();
+        }
         textViewDate.append("\n Local time: "+localTime);
     }
 }

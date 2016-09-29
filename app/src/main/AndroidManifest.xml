@@ -17,17 +17,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="com.example.tatyana.sampledate.TIMEZONEACTIVITY" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
-        <receiver android:name=".ChangeTimeZone">
-            <intent-filter>
-                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
-                <action android:name="android.intent.action.TIME_SET" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
